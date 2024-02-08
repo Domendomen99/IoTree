@@ -17,8 +17,8 @@ const char* pwdRete = "4452CC2BAB";
 IPAddress ip_scheda(192,168,1,104);
 IPAddress ip_server(192,168,1,86);
 ///////////////////////////////////////////////////////////
-//int pinLetturaAnalogica = 34;
-//int pinLed1 = 05;
+int pinLetturaAnalogica = 34;
+int pinLed1 = 25;
 //int pinLed2 = 23;
 ///////////////////////////////////////////////////////////
 //int luminosiaLimite1 = 1000;
@@ -76,10 +76,11 @@ void connessioneaWiFi(){
 }
 
 void inizializzaLED(){
-  /*pinMode(pinLed1,OUTPUT);
-  pinMode(pinLed2,OUTPUT);
-  digitalWrite(pinLed1,HIGH);
-  digitalWrite(pinLed2,LOW);*/
+  Serial.println("Ingresso in InizializzaLED");
+  //pinMode(pinLed1,OUTPUT);
+  //pinMode(pinLed2,OUTPUT);
+  //digitalWrite(pinLed1,HIGH);
+  //digitalWrite(pinLed2,LOW);
 }
 
 ///////////////////////////////////////////////////////////
@@ -113,12 +114,13 @@ void invioLuminositaMisurata(){
   Serial.println("Ingresso in invioLight");
   //client.publish("outTopic","hello_world");
   //Serial.println("\n-> Invio su topic (outTopic) -> (hello_world)");
-  //int lightINT = analogRead(pinLetturaAnalogica);
-  //char lightStringa[5];
-  //snprintf(lightStringa, sizeof(lightStringa), "%d", lightINT);
+  int lightINT = analogRead(pinLetturaAnalogica);
+  Serial.println("Valore luce letto : ");
+  Serial.println(lightINT);
+  char lightChar[5];
+  snprintf(lightChar, sizeof(lightChar), "%d", lightINT);
   //client.publish("domenicoRossini/test",lightStringa);
-  //client.publish("domenicoRossini/IoTree/light","50");
-  //delay(500);
+  client.publish("domenicoRossini/IoTree/light",lightChar);
   //client.publish("domenicoRossini/IoTree/light","1000");
   //Serial.println("\n-> Invio su topic (domenicoRossini/lightSensor) -> (lightStringa)");
 }
@@ -161,6 +163,7 @@ void loop() {
     iscrizioneTopic();
   }
   Serial.println("Inizio del LOOP");
+  invioLuminositaMisurata();
   delay(10000);
   client.loop();
   Serial.println("Fine del LOOP");
