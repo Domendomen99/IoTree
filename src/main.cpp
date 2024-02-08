@@ -4,6 +4,8 @@
 #include <PubSubClient.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <DHT.h>
+#include <Adafruit_Sensor.h>
 //#include <string.h>
 
 ///////////////////////////////////////////////////////////
@@ -23,6 +25,8 @@ int pinLed1 = 25;
 ///////////////////////////////////////////////////////////
 //int luminosiaLimite1 = 1000;
 ///////////////////////////////////////////////////////////
+int pinDHT = 26;
+DHT dht(pinDHT,DHT11);
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Ingresso in CALLBACK");
@@ -94,6 +98,7 @@ void setup() {
   Serial.println("Ingresso in SETUP");
   connessioneaWiFi();
   inizializzaLED();
+  dht.begin();
 }
 
 void iscrizioneTopic(){
@@ -115,8 +120,11 @@ void invioLuminositaMisurata(){
   //client.publish("outTopic","hello_world");
   //Serial.println("\n-> Invio su topic (outTopic) -> (hello_world)");
   int lightINT = analogRead(pinLetturaAnalogica);
-  Serial.println("Valore luce letto : ");
-  Serial.println(lightINT);
+
+  Serial.print("Luce  : ");
+  Serial.print(lightINT);
+  Serial.println("");
+
   char lightChar[5];
   snprintf(lightChar, sizeof(lightChar), "%d", lightINT);
   //client.publish("domenicoRossini/test",lightStringa);
@@ -127,10 +135,18 @@ void invioLuminositaMisurata(){
 
 void invioTemperaturaMisurata(){
   Serial.println("Ingresso in invioTemp");
+  int t = dht.readTemperature();
+  Serial.print("Temp : ");
+  Serial.print(t);
+  Serial.println("");
 }
 
 void invioUmiditaMisurata(){
   Serial.println("Ingresso in invioHum");
+  int h = dht.readHumidity();
+  Serial.print("Umidità : ");
+  Serial.print(h);
+  Serial.println("");
 }
 
 void reconnect() {
@@ -164,7 +180,9 @@ void loop() {
   }
   Serial.println("Inizio del LOOP");
   invioLuminositaMisurata();
-  delay(10000);
+  invioUmiditaMisurata();
+  invioTemperaturaMisurata();
+  delay(5000);
   client.loop();
   Serial.println("Fine del LOOP");
 }
