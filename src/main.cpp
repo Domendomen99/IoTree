@@ -1,0 +1,167 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <PubSubClient.h>
+#include <stdio.h>
+#include <stdlib.h>
+//#include <string.h>
+
+///////////////////////////////////////////////////////////
+//-DATI RETE E CLIENT E SERVER MQTT
+//const char* nomeRete = "MORE-IOT";
+//const char* pwdRete = "MORE-IOT-PWD";
+const char* nomeRete = "FASTWEB-1-A91631_EXT";
+const char* pwdRete = "4452CC2BAB";
+//IPAddress ip_scheda(192,168,0,5);
+//IPAddress ip_server(192, 168, 0, 13);
+IPAddress ip_scheda(192,168,1,104);
+IPAddress ip_server(192,168,1,86);
+///////////////////////////////////////////////////////////
+//int pinLetturaAnalogica = 34;
+//int pinLed1 = 05;
+//int pinLed2 = 23;
+///////////////////////////////////////////////////////////
+//int luminosiaLimite1 = 1000;
+///////////////////////////////////////////////////////////
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.println("Ingresso in CALLBACK");
+  // handle message arrived
+  Serial.print(" - Message arrived on topic : [");
+  Serial.print(topic);
+  Serial.print("] ->  ");
+  int luminositaINT=0;
+  String payloaSTR="";
+  for (int i=0;i<length;i++) {
+    Serial.print((char)payload[i]);
+    payloaSTR = payloaSTR + (char)payload[i];
+  }
+  String topicStr(topic);
+  String stringaTopicLight = "domenicoRossini/IoTree/light";
+  String stringaTopicHum = "domenicoRossini/IoTree/hum";
+  String stringaTopicTemp = "domenicoRossini/IoTree/temp";
+  luminositaINT = payloaSTR.toInt();
+  if(topicStr==stringaTopicLight){
+    Serial.println("Ricevuto lightMSG");
+    /*if(luminositaINT>luminosiaLimite1){
+      digitalWrite(pinLed1,LOW);
+      digitalWrite(pinLed2,HIGH);
+    }else{
+      digitalWrite(pinLed1,HIGH);
+      digitalWrite(pinLed2,LOW);
+    }*/
+  }else if(topicStr==stringaTopicHum){
+    Serial.println("Ricevuto humMSG");
+  }else if(topicStr==stringaTopicTemp){
+    Serial.println("Ricevuto temoMSG");
+  }
+  Serial.println();
+}
+
+///////////////////////////////////////////////////////////
+WiFiClient wifiClient;
+PubSubClient client(ip_server,1883,callback,wifiClient);
+///////////////////////////////////////////////////////////
+
+void connessioneaWiFi(){
+  Serial.println("Ingresso in CONNESSIONE_WIFI");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(nomeRete,pwdRete);
+  Serial.println("\nTentativo di connessione alla rete");
+  while(WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+  }
+  Serial.println("\nConnessione Stabilita con IP : ");
+  Serial.println(WiFi.localIP());
+}
+
+void inizializzaLED(){
+  /*pinMode(pinLed1,OUTPUT);
+  pinMode(pinLed2,OUTPUT);
+  digitalWrite(pinLed1,HIGH);
+  digitalWrite(pinLed2,LOW);*/
+}
+
+///////////////////////////////////////////////////////////
+
+void setup() {
+  ///////////////////////////////////////////////////////////
+  // put your setup code here, to run once:
+  //int result = myFunction(2, 3);
+  ///////////////////////////////////////////////////////////
+  Serial.begin(9600);
+  Serial.println("Ingresso in SETUP");
+  connessioneaWiFi();
+  inizializzaLED();
+}
+
+void iscrizioneTopic(){
+  Serial.println("Ingresso in IscrizioneTOPIC");
+  /*client.subscribe("inTopic");
+  Serial.println("\n-> Iscrizione a topic (inTopic)");
+  client.subscribe("outTopic");
+  Serial.println("\n-> Iscrizione a topic (outTopic)");*/
+  client.subscribe("domenicoRossini/IoTree/light");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light)");
+  client.subscribe("domenicoRossini/IoTree/temp");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/temp)");
+  client.subscribe("domenicoRossini/IoTree/hum");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/hum)");
+}
+
+void invioLuminositaMisurata(){
+  Serial.println("Ingresso in invioLight");
+  //client.publish("outTopic","hello_world");
+  //Serial.println("\n-> Invio su topic (outTopic) -> (hello_world)");
+  //int lightINT = analogRead(pinLetturaAnalogica);
+  //char lightStringa[5];
+  //snprintf(lightStringa, sizeof(lightStringa), "%d", lightINT);
+  //client.publish("domenicoRossini/test",lightStringa);
+  //client.publish("domenicoRossini/IoTree/light","50");
+  //delay(500);
+  //client.publish("domenicoRossini/IoTree/light","1000");
+  //Serial.println("\n-> Invio su topic (domenicoRossini/lightSensor) -> (lightStringa)");
+}
+
+void invioTemperaturaMisurata(){
+  Serial.println("Ingresso in invioTemp");
+}
+
+void invioUmiditaMisurata(){
+  Serial.println("Ingresso in invioHum");
+}
+
+void reconnect() {
+  Serial.println("Ingresso in reconnect");
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+
+    // Attempt to connect
+
+    // codice per connessione con nome casuale
+    //String clientId = "ESP8266Client-";
+    //clientId += String(random(0xffff), HEX);
+
+    if (client.connect("monitor")){
+      Serial.println("\n-> Connessione Stabilita");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 1 second");
+      delay(1000);
+    }
+  }
+  
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+    iscrizioneTopic();
+  }
+  Serial.println("Inizio del LOOP");
+  delay(10000);
+  client.loop();
+  Serial.println("Fine del LOOP");
+}
