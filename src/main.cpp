@@ -136,17 +136,27 @@ void invioLuminositaMisurata(){
 void invioTemperaturaMisurata(){
   Serial.println("Ingresso in invioTemp");
   int t = dht.readTemperature();
+  
   Serial.print("Temp : ");
   Serial.print(t);
   Serial.println("");
+
+  char tChar[5];
+  snprintf(tChar, sizeof(tChar), "%d", t);
+  client.publish("domenicoRossini/IoTree/temp",tChar);
 }
 
 void invioUmiditaMisurata(){
   Serial.println("Ingresso in invioHum");
   int h = dht.readHumidity();
+
   Serial.print("Umidità : ");
   Serial.print(h);
   Serial.println("");
+
+  char hChar[5];
+  snprintf(hChar, sizeof(hChar), "%d", h);
+  client.publish("domenicoRossini/IoTree/hum",hChar);
 }
 
 void reconnect() {
