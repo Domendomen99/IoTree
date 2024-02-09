@@ -27,6 +27,13 @@ int pinLed1 = 25;
 ///////////////////////////////////////////////////////////
 int pinDHT = 26;
 DHT dht(pinDHT,DHT11);
+///////////////////////////////////////////////////////////
+bool statusLight = true;
+bool statusHum = true;
+bool statusTemp = true;
+int luminositaINT=0;
+///////////////////////////////////////////////////////////
+
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Ingresso in CALLBACK");
@@ -34,12 +41,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print(" - Message arrived on topic : [");
   Serial.print(topic);
   Serial.print("] ->  ");
-  int luminositaINT=0;
   String payloaSTR="";
   for (int i=0;i<length;i++) {
     Serial.print((char)payload[i]);
     payloaSTR = payloaSTR + (char)payload[i];
   }
+  Serial.println("");
   String topicStr(topic);
   String stringaTopicLight = "domenicoRossini/IoTree/light";
   String stringaTopicHum = "domenicoRossini/IoTree/hum";
@@ -47,9 +54,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   String stringaTopicLightStatus = "domenicoRossini/IoTree/light/status";
   String stringaTopicHumStatus = "domenicoRossini/IoTree/hum/status";
   String stringaTopicTempStatus = "domenicoRossini/IoTree/temp/status";
-  luminositaINT = payloaSTR.toInt();
   if(topicStr==stringaTopicLight){
     Serial.println("Ricevuto lightMSG");
+    luminositaINT = payloaSTR.toInt();
     /*if(luminositaINT>luminosiaLimite1){
       digitalWrite(pinLed1,LOW);
       digitalWrite(pinLed2,HIGH);
@@ -66,19 +73,34 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if(topicStr==stringaTopicTempStatus){
     Serial.println("Ricevuto tempStatMSG");
+    if(payloaSTR.equals("false")){
+      statusTemp = false;
+    }else{
+      statusTemp = true;
+    }
   }
   if(topicStr==stringaTopicHumStatus){
     Serial.println("Ricevuto humStatMSG");
+    if(payloaSTR.equals("false")){
+      statusHum = false;
+    }else{
+      statusHum = true;
+    }
   }
   if(topicStr==stringaTopicLightStatus){
     Serial.println("Ricevuto lightStatMSG");
+    if(payloaSTR.equals("false")){
+      statusLight = false;
+    }else{
+      statusLight = true;
+    }
   }
   Serial.println();
 }
 
 ///////////////////////////////////////////////////////////
 WiFiClient wifiClient;
-PubSubClient client(ip_server,1883,callback,wifiClient);
+PubSubClient client(ip_server,1883,wifiClient);
 ///////////////////////////////////////////////////////////
 
 void connessioneaWiFi(){
@@ -113,6 +135,8 @@ void setup() {
   connessioneaWiFi();
   inizializzaLED();
   dht.begin();
+  client.setKeepAlive(30000);
+  client.setCallback(callback);
 }
 
 void iscrizioneTopic(){
@@ -183,9 +207,6 @@ void reconnect() {
   Serial.println("Ingresso in reconnect");
   // Loop until we're reconnected
 
-  client.setKeepAlive(30000);
-  //client.setCallback(callback);
-
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
 
@@ -208,10 +229,16 @@ void reconnect() {
 }
 
 void invioValoriMisurati(){
-  invioLuminositaMisurata();
+  if(statusLight){
+    invioLuminositaMisurata();
+  }
+  if(statusTemp){
+    invioTemperaturaMisurata();
+  }
+  if(statusHum){
+    invioUmiditaMisurata();
+  }
   digitalWrite(pinLed1,HIGH);
-  invioUmiditaMisurata();
-  invioTemperaturaMisurata();
   delay(1000);
   digitalWrite(pinLed1,LOW);
 }
@@ -221,9 +248,10 @@ void loop() {
     reconnect();
     iscrizioneTopic();
   }
+  client.loop();
   Serial.println("Inizio del LOOP");
   invioValoriMisurati();
-  delay(30000);
-  client.loop();
+  delay(5000);
   Serial.println("Fine del LOOP");
+  Serial.println("");
 }
