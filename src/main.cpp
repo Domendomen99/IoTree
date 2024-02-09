@@ -81,7 +81,7 @@ void connessioneaWiFi(){
 
 void inizializzaLED(){
   Serial.println("Ingresso in InizializzaLED");
-  //pinMode(pinLed1,OUTPUT);
+  pinMode(pinLed1,OUTPUT);
   //pinMode(pinLed2,OUTPUT);
   //digitalWrite(pinLed1,HIGH);
   //digitalWrite(pinLed2,LOW);
@@ -183,16 +183,23 @@ void reconnect() {
   
 }
 
+void invioValoriMisurati(){
+  invioLuminositaMisurata();
+  digitalWrite(pinLed1,HIGH);
+  invioUmiditaMisurata();
+  invioTemperaturaMisurata();
+  delay(1000);
+  digitalWrite(pinLed1,LOW);
+}
+
 void loop() {
   if (!client.connected()) {
     reconnect();
     iscrizioneTopic();
   }
   Serial.println("Inizio del LOOP");
-  invioLuminositaMisurata();
-  invioUmiditaMisurata();
-  invioTemperaturaMisurata();
-  delay(5000);
+  invioValoriMisurati();
+  delay(30000);
   client.loop();
   Serial.println("Fine del LOOP");
 }
