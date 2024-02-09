@@ -44,6 +44,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   String stringaTopicLight = "domenicoRossini/IoTree/light";
   String stringaTopicHum = "domenicoRossini/IoTree/hum";
   String stringaTopicTemp = "domenicoRossini/IoTree/temp";
+  String stringaTopicLightStatus = "domenicoRossini/IoTree/light/status";
+  String stringaTopicHumStatus = "domenicoRossini/IoTree/hum/status";
+  String stringaTopicTempStatus = "domenicoRossini/IoTree/temp/status";
   luminositaINT = payloaSTR.toInt();
   if(topicStr==stringaTopicLight){
     Serial.println("Ricevuto lightMSG");
@@ -54,10 +57,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
       digitalWrite(pinLed1,HIGH);
       digitalWrite(pinLed2,LOW);
     }*/
-  }else if(topicStr==stringaTopicHum){
+  }
+  if(topicStr==stringaTopicHum){
     Serial.println("Ricevuto humMSG");
-  }else if(topicStr==stringaTopicTemp){
-    Serial.println("Ricevuto temoMSG");
+  }
+  if(topicStr==stringaTopicTemp){
+    Serial.println("Ricevuto tempMSG");
+  }
+  if(topicStr==stringaTopicTempStatus){
+    Serial.println("Ricevuto tempStatMSG");
+  }
+  if(topicStr==stringaTopicHumStatus){
+    Serial.println("Ricevuto humStatMSG");
+  }
+  if(topicStr==stringaTopicLightStatus){
+    Serial.println("Ricevuto lightStatMSG");
   }
   Serial.println();
 }
@@ -107,12 +121,18 @@ void iscrizioneTopic(){
   Serial.println("\n-> Iscrizione a topic (inTopic)");
   client.subscribe("outTopic");
   Serial.println("\n-> Iscrizione a topic (outTopic)");*/
-  client.subscribe("domenicoRossini/IoTree/light");
-  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light)");
-  client.subscribe("domenicoRossini/IoTree/temp");
-  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/temp)");
-  client.subscribe("domenicoRossini/IoTree/hum");
-  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/hum)");
+  //client.subscribe("domenicoRossini/IoTree/light");
+  //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light)");
+  //client.subscribe("domenicoRossini/IoTree/temp");
+  //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/temp)");
+  //client.subscribe("domenicoRossini/IoTree/hum");
+  //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/hum)");
+  client.subscribe("domenicoRossini/IoTree/light/status");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light/status)");
+  client.subscribe("domenicoRossini/IoTree/hum/status");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/hum/status)");
+  client.subscribe("domenicoRossini/IoTree/temp/status");
+  Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/temp/status)");
 }
 
 void invioLuminositaMisurata(){
@@ -162,6 +182,10 @@ void invioUmiditaMisurata(){
 void reconnect() {
   Serial.println("Ingresso in reconnect");
   // Loop until we're reconnected
+
+  client.setKeepAlive(30000);
+  //client.setCallback(callback);
+
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
 
@@ -170,8 +194,8 @@ void reconnect() {
     // codice per connessione con nome casuale
     //String clientId = "ESP8266Client-";
     //clientId += String(random(0xffff), HEX);
-
-    if (client.connect("monitor")){
+    
+    if (client.connect("#monitorIoTree#")){
       Serial.println("\n-> Connessione Stabilita");
     } else {
       Serial.print("failed, rc=");
