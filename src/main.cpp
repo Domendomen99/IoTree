@@ -19,21 +19,30 @@ const char* pwdRete = "4452CC2BAB";
 IPAddress ip_scheda(192,168,1,104);
 IPAddress ip_server(192,168,1,86);
 ///////////////////////////////////////////////////////////
+//-DATI PIN BOARD
 int pinLetturaAnalogica = 34;
 int pinLed1 = 25;
 //int pinLed2 = 23;
 ///////////////////////////////////////////////////////////
 //int luminosiaLimite1 = 1000;
 ///////////////////////////////////////////////////////////
+//-DATI SENSORE DHT
 int pinDHT = 26;
 DHT dht(pinDHT,DHT11);
 ///////////////////////////////////////////////////////////
+//-VARIABILI DI STATO
 bool statusLight = true;
 bool statusHum = true;
 bool statusTemp = true;
 int luminositaINT=0;
 ///////////////////////////////////////////////////////////
-
+//-DATI X CONNESSIONE A INTERNET
+WiFiClient wifiClient;
+PubSubClient client(ip_server,1883,wifiClient);
+///////////////////////////////////////////////////////////
+//-DATI X DEEP SLEEP
+#define MILLIS 1000000
+///////////////////////////////////////////////////////////
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Ingresso in CALLBACK");
@@ -57,13 +66,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if(topicStr==stringaTopicLight){
     Serial.println("Ricevuto lightMSG");
     luminositaINT = payloaSTR.toInt();
-    /*if(luminositaINT>luminosiaLimite1){
-      digitalWrite(pinLed1,LOW);
-      digitalWrite(pinLed2,HIGH);
-    }else{
-      digitalWrite(pinLed1,HIGH);
-      digitalWrite(pinLed2,LOW);
-    }*/
   }
   if(topicStr==stringaTopicHum){
     Serial.println("Ricevuto humMSG");
@@ -98,11 +100,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
-///////////////////////////////////////////////////////////
-WiFiClient wifiClient;
-PubSubClient client(ip_server,1883,wifiClient);
-///////////////////////////////////////////////////////////
-
 void connessioneaWiFi(){
   Serial.println("Ingresso in CONNESSIONE_WIFI");
   WiFi.mode(WIFI_STA);
@@ -123,34 +120,20 @@ void inizializzaLED(){
   //digitalWrite(pinLed2,LOW);
 }
 
-///////////////////////////////////////////////////////////
-
-void setup() {
-  ///////////////////////////////////////////////////////////
-  // put your setup code here, to run once:
-  //int result = myFunction(2, 3);
-  ///////////////////////////////////////////////////////////
-  Serial.begin(9600);
-  Serial.println("Ingresso in SETUP");
-  connessioneaWiFi();
-  inizializzaLED();
-  dht.begin();
-  client.setKeepAlive(30000);
-  client.setCallback(callback);
-}
-
 void iscrizioneTopic(){
   Serial.println("Ingresso in IscrizioneTOPIC");
-  /*client.subscribe("inTopic");
-  Serial.println("\n-> Iscrizione a topic (inTopic)");
-  client.subscribe("outTopic");
-  Serial.println("\n-> Iscrizione a topic (outTopic)");*/
+
+  //client.subscribe("inTopic");
+  //Serial.println("\n-> Iscrizione a topic (inTopic)");
+  //client.subscribe("outTopic");
+  //Serial.println("\n-> Iscrizione a topic (outTopic)");
   //client.subscribe("domenicoRossini/IoTree/light");
   //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light)");
   //client.subscribe("domenicoRossini/IoTree/temp");
   //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/temp)");
   //client.subscribe("domenicoRossini/IoTree/hum");
   //Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/hum)");
+
   client.subscribe("domenicoRossini/IoTree/light/status");
   Serial.println("\n-> Iscrizione a topic (domenicoRossini/IoTree/light/status)");
   client.subscribe("domenicoRossini/IoTree/hum/status");
@@ -161,8 +144,10 @@ void iscrizioneTopic(){
 
 void invioLuminositaMisurata(){
   Serial.println("Ingresso in invioLight");
+
   //client.publish("outTopic","hello_world");
   //Serial.println("\n-> Invio su topic (outTopic) -> (hello_world)");
+
   int lightINT = analogRead(pinLetturaAnalogica);
 
   Serial.print("Luce  : ");
@@ -171,10 +156,14 @@ void invioLuminositaMisurata(){
 
   char lightChar[5];
   snprintf(lightChar, sizeof(lightChar), "%d", lightINT);
+
   //client.publish("domenicoRossini/test",lightStringa);
+
   client.publish("domenicoRossini/IoTree/light",lightChar);
+
   //client.publish("domenicoRossini/IoTree/light","1000");
   //Serial.println("\n-> Invio su topic (domenicoRossini/lightSensor) -> (lightStringa)");
+
 }
 
 void invioTemperaturaMisurata(){
@@ -205,53 +194,91 @@ void invioUmiditaMisurata(){
 
 void reconnect() {
   Serial.println("Ingresso in reconnect");
-  // Loop until we're reconnected
 
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
 
-    // Attempt to connect
-
-    // codice per connessione con nome casuale
+    // codice per connessione con nome casuale - NON UTILIZZATO
     //String clientId = "ESP8266Client-";
     //clientId += String(random(0xffff), HEX);
     
     if (client.connect("#monitorIoTree#")){
+
       Serial.println("\n-> Connessione Stabilita");
+
     } else {
+
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 1 second");
       delay(1000);
+
     }
+
   }
   
 }
 
 void invioValoriMisurati(){
-  if(statusLight){
+  for (int i = 0; i < 5; i++)
+  {
+    if(statusLight){
     invioLuminositaMisurata();
+    }
+    if(statusTemp){
+      invioTemperaturaMisurata();
+    }
+    if(statusHum){
+      invioUmiditaMisurata();
+    }
+    digitalWrite(pinLed1,HIGH);
+    delay(2000);
+    digitalWrite(pinLed1,LOW);
   }
-  if(statusTemp){
-    invioTemperaturaMisurata();
-  }
-  if(statusHum){
-    invioUmiditaMisurata();
-  }
-  digitalWrite(pinLed1,HIGH);
-  delay(1000);
-  digitalWrite(pinLed1,LOW);
 }
 
-void loop() {
+void deepSleep(int tempo){
+  esp_sleep_enable_timer_wakeup(tempo * MILLIS);
+  Serial.flush();
+  esp_deep_sleep_start();
+}
+
+void riconnessioneSeNecessario(){
   if (!client.connected()) {
     reconnect();
     iscrizioneTopic();
   }
+}
+
+void setup() {
+
+  Serial.begin(9600);
+
+  Serial.println("Ingresso in SETUP");
+
+  connessioneaWiFi();
+
+  inizializzaLED();
+
+  dht.begin();
+
+  client.setKeepAlive(30000);
+  client.setCallback(callback);
+
+}
+
+void loop() {
+
+  riconnessioneSeNecessario();
+
   client.loop();
+
   Serial.println("Inizio del LOOP");
+
   invioValoriMisurati();
-  delay(5000);
-  Serial.println("Fine del LOOP");
-  Serial.println("");
+
+  Serial.println("Fine del LOOP"); Serial.println("");
+
+  deepSleep(60);
+
 }
