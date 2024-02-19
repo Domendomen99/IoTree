@@ -232,8 +232,9 @@ void invioValoriMisurati(){
       invioUmiditaMisurata();
     }
     digitalWrite(pinLed1,HIGH);
-    delay(2000);
+    delay(1000);
     digitalWrite(pinLed1,LOW);
+    delay(1000);
   }
 }
 
