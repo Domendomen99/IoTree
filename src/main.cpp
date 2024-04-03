@@ -30,7 +30,7 @@ int pinLed1 = 25;
 int pinDHT = 26;
 DHT dht(pinDHT,DHT11);
 ///////////////////////////////////////////////////////////
-//-VARIABILI DI STATO
+//-VARIABILI DI STATO - non utilizzate
 bool statusLight = true;
 bool statusHum = true;
 bool statusTemp = true;
@@ -46,7 +46,7 @@ PubSubClient client(ip_server,1883,wifiClient);
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Ingresso in CALLBACK");
-  // handle message arrived
+  // gestione del messaggio ricevuto
   Serial.print(" - Message arrived on topic : [");
   Serial.print(topic);
   Serial.print("] ->  ");
@@ -57,12 +57,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println("");
   String topicStr(topic);
+  // stringhe da comparare per capire a quale topic appartiene il messaggio appena ricevuto
   String stringaTopicLight = "domenicoRossini/IoTree/light";
   String stringaTopicHum = "domenicoRossini/IoTree/hum";
   String stringaTopicTemp = "domenicoRossini/IoTree/temp";
   String stringaTopicLightStatus = "domenicoRossini/IoTree/light/status";
   String stringaTopicHumStatus = "domenicoRossini/IoTree/hum/status";
   String stringaTopicTempStatus = "domenicoRossini/IoTree/temp/status";
+  // esecuzione di operazioni in base a messaggio ricevuto
   if(topicStr==stringaTopicLight){
     Serial.println("Ricevuto lightMSG");
     luminositaINT = payloaSTR.toInt();
@@ -73,6 +75,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if(topicStr==stringaTopicTemp){
     Serial.println("Ricevuto tempMSG");
   }
+  // (non utilizzato)
   if(topicStr==stringaTopicTempStatus){
     Serial.println("Ricevuto tempStatMSG");
     if(payloaSTR.equals("false")){
@@ -220,6 +223,7 @@ void reconnect() {
 }
 
 void invioValoriMisurati(){
+  // invio di valori misurati
   for (int i = 0; i < 5; i++)
   {
     if(statusLight){
@@ -280,6 +284,7 @@ void loop() {
 
   Serial.println("Fine del LOOP"); Serial.println("");
 
+  //per ogni ciclo del loop si dorme per 1 minuto"
   deepSleep(60);
 
 }
